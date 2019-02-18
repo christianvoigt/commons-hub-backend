@@ -26,7 +26,7 @@ var projects = [];
 var locations = [];
 
 var mongoose = require("mongoose");
-mongoose.connect(mongoURL);
+mongoose.connect(mongoURL, { useNewUrlParser: true });
 mongoose.Promise = global.Promise;
 mongoose.connection.on(
   "error",

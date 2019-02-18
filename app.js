@@ -27,7 +27,7 @@ var mongo_host = process.env.MONGODB_HOST;
 
 var mongoose = require("mongoose");
 var mongoURL = `mongodb://${mongo_username}:${mongo_password}@${mongo_host}:${mongo_port}/${mongo_dbname}?authSource=admin`;
-mongoose.connect(mongoURL);
+mongoose.connect(mongoURL, { useNewUrlParser: true });
 mongoose.Promise = global.Promise;
 var db = mongoose.connection;
 db.on("error", logger.error.bind(logger, "MongoDB connection error:"));

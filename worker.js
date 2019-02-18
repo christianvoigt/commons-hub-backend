@@ -56,7 +56,11 @@ async function run() {
   // will go in the "agendatest" database's "jobs" collection.
   //const agenda = new Agenda().mongo(db, 'jobs');
   agenda = new Agenda({
-    db: { address: mongoConnectionString, collection: "jobs" }
+    db: {
+      address: mongoConnectionString,
+      collection: "jobs",
+      options: { useNewUrlParser: true }
+    }
   });
   jobTypes.forEach(function(type) {
     require("./jobs/" + type.trim()).default(agenda);
