@@ -116,11 +116,13 @@ app.use(
   })
 );
 
-app.use("/", indexRoutes);
-app.use("/item", itemRoutes);
-app.use("/slot", slotRoutes);
+const basePath = process.env.EXPRESS_BASE_PATH || "";
+
+app.use(basePath + "/", indexRoutes);
+app.use(basePath + "/item", itemRoutes);
+app.use(basePath + "/slot", slotRoutes);
 // catch 404 and forward to error handler
-app.use("/location", locationRoutes);
+app.use(basePath + "/location", locationRoutes);
 app.use(function(req, res, next) {
   res.status(404).send("Sorry can't find that!");
 });
