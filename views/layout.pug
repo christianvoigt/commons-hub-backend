@@ -10,11 +10,11 @@ html
         nav.main-nav
           ul
             li 
-              a(href='/admin/project') Projects
+              a(href=`${basePath}/admin/project`) Projects
       div.login
         if user
-          a(href="/user") Profile
-          a(href="/logout") Log Out
+          a(href=`${basePath}/user`) Profile
+          a(href=`${basePath}/logout`) Log Out
         else
-          a(href="/login") Log In
+          a(href=`${basePath}/login`) Log In
     block content

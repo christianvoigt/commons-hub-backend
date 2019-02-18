@@ -8,5 +8,5 @@ block content
     ul
         each item in items
             li 
-                a(href=`/admin/item/${item._id}`) #{item.name}
+                a(href=`${basePath}/admin/item/${item._id}`) #{item.name}
 

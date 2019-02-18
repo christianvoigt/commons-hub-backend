@@ -57,6 +57,8 @@ passwordless.addDelivery(
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
+const basePath = process.env.EXPRESS_BASE_PATH || "";
+app.locals.basePath = basePath;
 app.set("view engine", "pug");
 
 // uncomment after placing your favicon in /public
@@ -116,13 +118,11 @@ app.use(
   })
 );
 
-const basePath = process.env.EXPRESS_BASE_PATH || "";
-
-app.use(basePath + "/", indexRoutes);
-app.use(basePath + "/item", itemRoutes);
-app.use(basePath + "/slot", slotRoutes);
+app.use("/", indexRoutes);
+app.use("/item", itemRoutes);
+app.use("/slot", slotRoutes);
 // catch 404 and forward to error handler
-app.use(basePath + "/location", locationRoutes);
+app.use("/location", locationRoutes);
 app.use(function(req, res, next) {
   res.status(404).send("Sorry can't find that!");
 });
@@ -139,6 +139,6 @@ app.use(function(err, req, res) {
 
 const expressPort = process.env.PORT || 3000;
 app.listen(expressPort, function() {
-  console.log("Example app listening on port 3000!");
+  console.log(`Example app listening on port ${expressPort}!`);
 });
 module.exports = app;

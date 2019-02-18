@@ -3,7 +3,7 @@ extends layout
 block content
     h2 Registered Projects
     p Check the sites you want to block.
-    form(action='/admin/project', method='POST')
+    form(action=`${basePath}/admin/project`, method='POST')
         table
             tr
                 th ID
@@ -14,7 +14,7 @@ block content
                 tr
                     td=project._id
                     td
-                        a(href=`/admin/project/${project.id}`)=project.name
+                        a(href=`${basePath}/admin/project/${project.id}`)=project.name
                     td=project.site_url
                     td
                         input(type='checkbox' id=`is_blocked-${project._id}` name=`is_blocked-${project._id}` checked=project.is_blocked)

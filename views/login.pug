@@ -3,7 +3,7 @@ extends layout
 block content
     h2 Admin Login
     div
-        form(action='/sendtoken' method='POST')
+        form(action=`${basePath}/sendtoken` method='POST')
             label(for=user) Email:
             input(name='user' type='text')
             input(type='submit' value='Login / Register')
