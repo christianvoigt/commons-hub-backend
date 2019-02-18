@@ -20,14 +20,14 @@ var app = express();
 
 //Set up mongoose connection
 var mongo_username = process.env.MONGODB_EXPRESS_USERNAME || "admin";
-var mongo_password = process.env.MONGODB_EXPRESS_PASSWORD;
+var mongo_password = encodeURIComponent(process.env.MONGODB_EXPRESS_PASSWORD);
 var mongo_dbname = process.env.MONGODB_DBNAME;
 var mongo_port = process.env.MONGODB_PORT;
 var mongo_host = process.env.MONGODB_HOST;
 
 var mongoose = require("mongoose");
 var mongoURL = `mongodb://${mongo_username}:${mongo_password}@${mongo_host}:${mongo_port}/${mongo_dbname}?authSource=admin`;
-mongoose.connect(mongoURL, { useNewUrlParser: true });
+mongoose.connect(mongoURL, { useNewUrlParser: true, uri_decode_auth: true });
 mongoose.Promise = global.Promise;
 var db = mongoose.connection;
 db.on("error", logger.error.bind(logger, "MongoDB connection error:"));
