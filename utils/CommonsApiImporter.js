@@ -7,6 +7,7 @@ const CLocation = require("../models/CLocation");
 const agenda = require("../worker");
 const mailRecipients = process.env.ADMIN_EMAIL_ADDRESSES;
 const logger = require("./logger");
+const EMAIL = require("../jobs/EMAIL").EMAIL;
 const commonsApiSource = require("../node_modules/commons-api/commons-api.schema.json");
 const velogisticsApiSource = require("../node_modules/commons-api/velogistics-api.schema.json");
 const Ajv = require("ajv");
@@ -231,7 +232,7 @@ Cheers, your Commons Booking Hub`,
 <p>If you want to block data from this site, please visit the blacklist in the admin area</p>
 <p>Cheers, your Commons Booking Hub</p>`
   };
-  agenda.now("email", mailOptions, function(error) {
+  agenda.now(EMAIL, mailOptions, function(error) {
     if (error) {
       logger.error(error);
     }

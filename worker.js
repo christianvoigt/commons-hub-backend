@@ -70,7 +70,7 @@ async function run() {
   // should happen in the `await MongoClient.connect()` call.
   await new Promise(resolve => agenda.once("ready", resolve));
   await unlockAgendaJobs(agenda);
-  agenda.every("1 hour", "import-data");
+  //agenda.every("1 hour", "import-data");
   agenda.start();
   /**
    * Gracefully exit Agenda

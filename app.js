@@ -14,6 +14,7 @@ var indexRoutes = require("./routes/index");
 var slotRoutes = require("./routes/slot");
 var locationRoutes = require("./routes/location");
 var agenda = require("./worker.js");
+var EMAIL = require("./jobs/EMAIL").EMAIL;
 require("dotenv").load();
 
 var app = express();
@@ -45,7 +46,7 @@ passwordless.addDelivery(
       text: `Hello Commons Booking Hub Admin!\nYou can now access your account here: ${host}/admin?token=${tokenToSend}&uid=${uidToSend}`,
       html: `<h1>Hello Commons Booking Hub Admin!</h1><p>You can now access your account by clicking on <a href="${host}/admin?token=${tokenToSend}&uid=${uidToSend}">this link</a>.<p>Greetings, your Commons Booking Hub!</p></p>`
     };
-    agenda.now("email", mailOptions, function(error) {
+    agenda.now(EMAIL, mailOptions, function(error) {
       if (error) {
         logger.error(error);
       }
