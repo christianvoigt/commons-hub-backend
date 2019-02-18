@@ -1,0 +1,16 @@
+extends layout
+
+block content
+    h2 #{item.name}
+    p #{item.description}
+    p #{item.ca_url}
+    h3 Slots (#{slots.length})
+    table
+        tr
+            th Start
+            th End
+            th Location
+            th Status
+        each slot in slots
+            include slot.pug
+

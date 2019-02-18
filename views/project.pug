@@ -1,0 +1,12 @@
+extends layout
+
+block content
+    h2 #{project.name}
+    p #{project.description}
+    p #{project.ca_url}
+    h3 Items
+    ul
+        each item in items
+            li 
+                a(href=`/admin/item/${item._id}`) #{item.name}
+

@@ -1,0 +1,20 @@
+doctype html
+html
+  head
+    title= title
+    link(rel='stylesheet', href='/stylesheets/style.css')
+  body
+    div.header
+      h1 Velogistics
+      if user
+        nav.main-nav
+          ul
+            li 
+              a(href='/admin/project') Projects
+      div.login
+        if user
+          a(href="/user") Profile
+          a(href="/logout") Log Out
+        else
+          a(href="/login") Log In
+    block content
