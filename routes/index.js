@@ -4,6 +4,8 @@ var passwordless = require("passwordless");
 // Require controller modules.
 const import_controller = require("../controllers/ImportController");
 const admin_controller = require("../controllers/AdminController");
+require("dotenv").load();
+const basePath = process.env.EXPRESS_BASE_PATH || "";
 // var instance_controller = require('../controllers/CProjectController');
 // var category_controller = require('../controllers/CBCategoryController');
 // var owner_controller = require('../controllers/CBOwnerController');
@@ -15,7 +17,11 @@ router.get("/", function(req, res) {
 router.get("/notify/", import_controller.notify);
 
 /* GET restricted site. */
-router.get("/admin", passwordless.restricted(), admin_controller.admin);
+router.get(
+  "/admin",
+  passwordless.restricted({ failureRedirect: basePath + "/login" }),
+  admin_controller.admin
+);
 
 router.get(
   "/admin/project",
@@ -46,7 +52,7 @@ router.get("/login", function(req, res) {
 
 /* GET logout. */
 router.get("/logout", function(req, res) {
-  res.redirect("/");
+  res.redirect(basePath + "/");
 });
 
 /* POST login screen. */
