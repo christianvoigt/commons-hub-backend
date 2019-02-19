@@ -4,7 +4,7 @@ var passwordless = require("passwordless");
 // Require controller modules.
 const import_controller = require("../controllers/ImportController");
 const admin_controller = require("../controllers/AdminController");
-require('dotenv').config({path: __dirname + '/.env'});
+require("dotenv").config({ path: __dirname + "/.env" });
 const basePath = process.env.EXPRESS_BASE_PATH || "";
 // var instance_controller = require('../controllers/CProjectController');
 // var category_controller = require('../controllers/CBCategoryController');
@@ -25,17 +25,17 @@ router.get(
 
 router.get(
   "/admin/project",
-  // passwordless.restricted(),
+  passwordless.restricted({ failureRedirect: basePath + "/login" }),
   admin_controller.blacklist_get
 );
 router.get(
   "/admin/item/:itemId",
-  // passwordless.restricted(),
+  passwordless.restricted({ failureRedirect: basePath + "/login" }),
   admin_controller.item
 );
 router.get(
   "/admin/project/:projectId",
-  // passwordless.restricted(),
+  passwordless.restricted({ failureRedirect: basePath + "/login" }),
   admin_controller.project
 );
 
