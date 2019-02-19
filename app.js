@@ -72,13 +72,6 @@ app.use(require("morgan")("combined", { stream: logger.stream }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
-// app.use(
-//   expressSession({
-//     secret: process.env.EXPRESS_SESSION_SECRET,
-//     saveUninitialized: false,
-//     resave: false
-//   })
-// );
 
 // config express-session
 var sess = {
@@ -88,9 +81,10 @@ var sess = {
   cookie: { maxAge: 1000 * 60 * 60 * 2 }
 };
 
-if (app.get("env") === "production") {
-  sess.cookie.secure = true; // serve secure cookies, requires https
-}
+// The following is the recommended setting on https connections, but did not work on uberspace 6:
+// if (app.get("env") === "production") {
+//   sess.cookie.secure = true; // serve secure cookies, requires https
+// }
 
 app.use(expressSession(sess));
 
@@ -142,6 +136,6 @@ app.use(function(err, req, res) {
 });
 
 app.listen(expressPort, function() {
-  console.log(`Example app listening on port ${expressPort}!`);
+  logger.info(`Commons Hub Backend listening on port ${expressPort}!`);
 });
 module.exports = app;

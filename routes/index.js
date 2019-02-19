@@ -51,7 +51,7 @@ router.get("/login", function(req, res) {
 });
 
 /* GET logout. */
-router.get("/logout", function(req, res) {
+router.get("/logout", passwordless.logout(), function(req, res) {
   res.redirect(basePath + "/");
 });
 
