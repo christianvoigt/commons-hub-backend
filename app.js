@@ -10,6 +10,7 @@ var passwordless = require("passwordless");
 var MongoStore = require("passwordless-mongostore");
 var compression = require("compression");
 var helmet = require("helmet");
+var MongoDBStore = require("connect-mongodb-session")(expressSession);
 
 var itemRoutes = require("./routes/item");
 var indexRoutes = require("./routes/index");
@@ -77,12 +78,27 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+var sessionStore = new MongoDBStore(
+  {
+    uri: mongoURL,
+    collection: "sessions"
+  },
+  function(error) {
+    if (error) {
+      logger.error(error.message);
+    }
+  }
+);
+sessionStore.on("error", function(error) {
+  logger.error(error.message);
+});
 // config express-session
 var sess = {
   secret: process.env.EXPRESS_SESSION_SECRET,
   saveUninitialized: false,
   resave: false,
-  cookie: { maxAge: 1000 * 60 * 60 * 2 }
+  cookie: { maxAge: 1000 * 60 * 60 * 2 },
+  store: sessionStore
 };
 
 // The following is the recommended setting on https connections, but did not work on uberspace 6:

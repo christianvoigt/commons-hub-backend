@@ -15,6 +15,7 @@
     "body-parser": "~1.18.2",
     "commons-api": "github:wielebenwir/commons-api#162a31f446b2fa285fd0ee0064a2ba50e50f722f",
     "compression": "^1.7.3",
+    "connect-mongodb-session": "^2.1.1",
     "cookie-parser": "^1.4.3",
     "debug": "~2.6.9",
     "dotenv": "^6.2.0",
