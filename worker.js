@@ -1,7 +1,7 @@
 const Agenda = require("agenda");
 const logger = require("./utils/logger");
 //const { MongoClient } = require('mongodb');
-require("dotenv").load();
+require('dotenv').config({path: __dirname + '/.env'});
 
 const mongo_username = process.env.MONGODB_AGENDA_USERNAME;
 const mongo_password = process.env.MONGODB_AGENDA_PASSWORD;

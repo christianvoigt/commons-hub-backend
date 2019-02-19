@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-require("dotenv").load();
+require('dotenv').config({path: __dirname + '/.env'});
 
 var app = require("../app");
 var debug = require("debug")("commons-hub:backend");

@@ -12,7 +12,7 @@ const commonsApiSource = require("../node_modules/commons-api/commons-api.schema
 const velogisticsApiSource = require("../node_modules/commons-api/velogistics-api.schema.json");
 const Ajv = require("ajv");
 const ajv = new Ajv();
-require("dotenv").load();
+require('dotenv').config({path: __dirname + '/.env'});
 
 ajv.addMetaSchema(
   require("../node_modules/ajv/lib/refs/json-schema-draft-06.json")

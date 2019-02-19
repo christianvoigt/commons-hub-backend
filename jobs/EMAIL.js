@@ -1,6 +1,6 @@
 const nodemailer = require("nodemailer");
 const logger = require("../utils/logger");
-require("dotenv").load();
+require('dotenv').config({path: __dirname + '/.env'});
 
 // create reusable transporter object using the default SMTP transport
 const email_password = process.env.EMAIL_PASSWORD;

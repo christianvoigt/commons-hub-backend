@@ -1,7 +1,7 @@
 var asyncMiddleware = require("../utils/asyncMiddleware");
 const agenda = require("../worker");
 const IMPORT_PROJECT = require("../jobs/IMPORT_PROJECT").IMPORT_PROJECT;
-require("dotenv").load();
+require('dotenv').config({path: __dirname + '/.env'});
 
 const Ajv = require("ajv");
 

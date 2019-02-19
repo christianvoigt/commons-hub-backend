@@ -1,7 +1,7 @@
 const faker = require("faker");
 const logger = require("./utils/logger");
 const moment = require("moment");
-require("dotenv").load();
+require('dotenv').config({path: __dirname + '/.env'});
 
 logger.info(
   "Velogistics DB Population: This script populates some test items, slots, locations, owners, projects to your database. It uses environment variables to create a url to your mongo database."

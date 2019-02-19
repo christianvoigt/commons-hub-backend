@@ -18,7 +18,7 @@ var slotRoutes = require("./routes/slot");
 var locationRoutes = require("./routes/location");
 var agenda = require("./worker.js");
 var EMAIL = require("./jobs/EMAIL").EMAIL;
-require("dotenv").load();
+require("dotenv").config({ path: __dirname + "/.env" });
 
 var app = express();
 app.use(compression());

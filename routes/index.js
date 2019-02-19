@@ -4,7 +4,7 @@ var passwordless = require("passwordless");
 // Require controller modules.
 const import_controller = require("../controllers/ImportController");
 const admin_controller = require("../controllers/AdminController");
-require("dotenv").load();
+require('dotenv').config({path: __dirname + '/.env'});
 const basePath = process.env.EXPRESS_BASE_PATH || "";
 // var instance_controller = require('../controllers/CProjectController');
 // var category_controller = require('../controllers/CBCategoryController');
