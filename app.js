@@ -8,6 +8,8 @@ var logger = require("./utils/logger");
 var expressSession = require("express-session");
 var passwordless = require("passwordless");
 var MongoStore = require("passwordless-mongostore");
+var compression = require("compression");
+var helmet = require("helmet");
 
 var itemRoutes = require("./routes/item");
 var indexRoutes = require("./routes/index");
@@ -18,6 +20,8 @@ var EMAIL = require("./jobs/EMAIL").EMAIL;
 require("dotenv").load();
 
 var app = express();
+app.use(compression());
+app.use(helmet());
 
 //Set up mongoose connection
 var mongo_username = process.env.MONGODB_EXPRESS_USERNAME || "admin";
@@ -135,7 +139,4 @@ app.use(function(err, req, res) {
   res.render("error");
 });
 
-app.listen(expressPort, function() {
-  logger.info(`Commons Hub Backend listening on port ${expressPort}!`);
-});
 module.exports = app;
