@@ -1,18 +1,19 @@
+const agenda = require("./agenda.js");
 const axios = require("axios");
 const mongoose = require("mongoose");
 const CProject = require("../models/CProject");
 const CItem = require("../models/CItem");
+const CSlot = require("../models/CSlot");
 const COwner = require("../models/COwner");
 const CLocation = require("../models/CLocation");
-const agenda = require("../worker");
-const mailRecipients = process.env.ADMIN_EMAIL_ADDRESSES;
 const logger = require("./logger");
 const EMAIL = require("../jobs/EMAIL").EMAIL;
 const commonsApiSource = require("../node_modules/commons-api/commons-api.schema.json");
 const velogisticsApiSource = require("../node_modules/commons-api/velogistics-api.schema.json");
 const Ajv = require("ajv");
 const ajv = new Ajv();
-require('dotenv').config({path: __dirname + '/.env'});
+require("dotenv").config({ path: __dirname + "/../.env" });
+const mailRecipients = process.env.ADMIN_EMAIL_ADRESSES;
 
 ajv.addMetaSchema(
   require("../node_modules/ajv/lib/refs/json-schema-draft-06.json")
@@ -21,103 +22,35 @@ ajv.addSchema(commonsApiSource);
 ajv.addSchema(velogisticsApiSource, "velogistics-api");
 const validate = ajv.getSchema("velogistics-api");
 
-const maxContentLength = process.env.IMPORT_MAX_CONTENT_LENGTH || 20000; // default is 20 kb
+const maxContentLength = process.env.IMPORT_MAX_CONTENT_LENGTH || 500000; // default is 500 kb
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-function getRandomInRange(from, to, fixed) {
-  return (Math.random() * (to - from) + from).toFixed(fixed) * 1;
-  // .toFixed() returns string, so ' * 1' is a trick to convert to number
-}
 
-var importFromCommonsApiEndpoint = async function(url) {
+const importFromCommonsApiEndpoint = async function(url) {
   // importFromUrl should never throw any errors, so we will catch them all.
   try {
     logger.info(`Trying to import data from url: ${url}`);
+    if (process.env.NODE_ENV === "development") {
+      logger.info(`Replacing localhost with host.docker.internal`);
+      url = url.replace("localhost", "host.docker.internal");
+    }
     var project = null;
-    let isNewProject = false;
-    // if (isLocalhost) {
-    //   url = url.replace("localhost", "docker.for.mac.localhost");
-    // }
-    project = await CProject.findOne({ url: url });
+    project = await CProject.find({ endpoint: url }).exec();
     if (project && project.is_blocked) {
       logger.info("Aborting import, site is blocked.");
       return false;
     }
-    const response = await axios.get(url, {
-      maxContentLength: maxContentLength
-    });
+    const response = await axios.get(url, { maxContentLength });
 
     if (!response) {
-      const e = new Error("Commons api endpoint not found.");
+      const e = new Error("Commons api endpoint not found");
       e.name = "EndpointNotFound";
       e.propertyName = "site";
       e.remoteHostname = url;
       throw e;
     }
-    if (!validate(response.data)) {
-      const e = new Error("Invalid Commons Api data: \n" + validate.errors);
-      e.name = "InvalidCommonsApiData";
-      e.propertyName = "site";
-      e.remoteHostname = url;
-      throw e;
-    }
-
-    if (!project) {
-      isNewProject = true;
-      const data = response.data;
-      project = createProject(data.project);
-    } else {
-      removeProjectData(project);
-      project.name = data.project.name;
-      if (data.project.description) {
-        project.description = data.project.description;
-      }
-    }
-    const locationDataArray = data.locations.map(l =>
-      createLocationData(l, project)
-    );
-    const ownerDataArray = data.owners.map(o => createOwnerData(o, project));
-    let locations, owners;
-    try {
-      const ownerAndLocationPromises = [
-        CLocation.insertMany(locationDataArray),
-        COwner.insertMany(ownerDataArray),
-        project.save()
-      ];
-      let ownerAndLocationResults = await Promise.all(ownerAndLocationPromises);
-      locations = ownerAndLocationResults[0].reduce(reduceToUidDictionary, {});
-      owners = ownerAndLocationResults[1].reduce(reduceToUidDictionary, {});
-    } catch (e) {
-      logger.info(
-        "Aborting import, error in project, location or owner data: " + e
-      );
-      return false;
-    }
-
-    if (isNewProject) {
-      sendNewProjectNotification(project);
-    }
-
-    const itemDataArray = data.items.map(i =>
-      createItemData(i, project, owners, locations)
-    );
-    const slotDataArray = [];
-    data.items.forEach(i => {
-      i.availability.reduce((acc, curr) => {
-        acc.push(createSlotData(curr, i, project, locations));
-        return acc;
-      }, slotDataArray);
-    });
-    try {
-      const itemAndSlotPromises = [
-        CItem.insertMany(itemDataArray),
-        CSlot.inserMany(slotDataArray)
-      ];
-      await Promise.all(itemAndSlotPromises);
-    } catch (e) {
-      logger.info("Failed import, error in item data: " + e);
-      return false;
-    }
+    await importJson(url, response.data, true);
+    logger.info("Successfully finished importing data from: " + url);
 
     return true;
   } catch (error) {
@@ -125,27 +58,88 @@ var importFromCommonsApiEndpoint = async function(url) {
     return false;
   }
 };
+const importJson = async function(url, data, sendNotification = true) {
+  if (!validate(data)) {
+    const e = new Error(
+      "Invalid Commons Api data: \n" + JSON.stringify(validate.errors)
+    );
+    e.name = "InvalidCommonsApiData";
+    e.propertyName = "site";
+    e.remoteHostname = url;
+    throw e;
+  }
+  const project = await CProject.findOne({ endpoint: url }).exec();
+  if (project && project.is_blocked) {
+    logger.info("Aborting import, site is blocked.");
+    return false;
+  }
+  let isNewProject = false;
+  if (!project) {
+    isNewProject = true;
+    project = createProject(url, data.project);
+  } else {
+    removeProjectData(project._id);
+    project.name = data.project.name;
+    project.url = data.project.url;
+    project.imported = new Date();
+    if (data.project.description) {
+      project.description = data.project.description;
+    }
+  }
+  const locationDataArray = data.locations.features.map(l =>
+    createLocationData(l, project)
+  );
+  const ownerDataArray = data.owners.map(o => createOwnerData(o, project));
+  let locations, owners;
+  const ownerAndLocationPromises = [
+    CLocation.insertMany(locationDataArray),
+    COwner.insertMany(ownerDataArray),
+    project.save()
+  ];
+  let ownerAndLocationResults = await Promise.all(ownerAndLocationPromises);
+  locations = ownerAndLocationResults[0].reduce(reduceToUidDictionary, {});
+  owners = ownerAndLocationResults[1].reduce(reduceToUidDictionary, {});
+
+  const itemDataArray = data.items.map(i => createItemData(i, project, owners));
+  const slotDataArray = [];
+  data.items.forEach(i => {
+    const itemData = itemDataArray.find(data => data.uid === i.uid);
+    i.availability.reduce((acc, curr) => {
+      acc.push(createSlotData(curr, itemData, project, locations));
+      return acc;
+    }, slotDataArray);
+  });
+  const itemAndSlotPromises = [
+    CItem.insertMany(itemDataArray),
+    CSlot.insertMany(slotDataArray)
+  ];
+  await Promise.all(itemAndSlotPromises);
+  if (sendNotification && isNewProject) {
+    sendNewProjectNotification(project);
+  }
+  return true;
+};
 
 const importAllProjects = async function() {
   logger.info("Updating all CB instances...");
   const projects = await CProject.find()
-    .select("url")
+    .select("endpoint")
     .exec();
   const promises = [];
   if (projects) {
     for (var project of projects) {
-      promises.push(importFromCommonsApiEndpoint(project.url));
+      promises.push(importFromCommonsApiEndpoint(project.endpoint));
     }
   }
   await Promise.all(promises);
   logger.info("Finished updating all CB instances...");
 };
-const createProject = function(projectData) {
-  let { name, url, uid, description } = projectData;
+const createProject = function(endpointUrl, projectData) {
+  let { name, url, description } = projectData;
   return new CProject({
     name,
-    uid,
-    url,
+    endpoint: endpointUrl,
+    url: encodeURI(unescapeSlashes(url)),
     description
   });
 };
@@ -157,7 +151,7 @@ const createLocationData = function(locationData, project) {
     description,
     address,
     uid,
-    url,
+    url: encodeURI(unescapeSlashes(url)),
     geometry: { type: "Point", coordinates },
     project: project._id
   };
@@ -166,13 +160,13 @@ const createOwnerData = function(ownerData, project) {
   let { name, description, uid, url } = ownerData;
   return {
     name,
-    description,
     uid,
-    url,
+    description,
+    url: encodeURI(unescapeSlashes(url)),
     project: project._id
   };
 };
-const createItemData = function(itemData, project, owners, locations) {
+const createItemData = function(itemApiData, project, owners) {
   let {
     name,
     description,
@@ -182,28 +176,35 @@ const createItemData = function(itemData, project, owners, locations) {
     nr_of_wheels,
     can_transport_children,
     max_transport_weight
-  } = itemData;
-  const owner = owners[owner_uid];
-  if (!owner) {
-    throw new Error("Owner not found in Commons Api data: " + owner_uid);
-  }
-  return {
+  } = itemApiData;
+  const itemMongoData = {
     _id: new mongoose.mongo.ObjectId(), // we create the id here so that we can use it in the slot data
     name,
     description,
     uid,
-    url,
+    url: encodeURI(unescapeSlashes(url)),
     project: project._id,
-    owner: owner._id,
     nrOfWheels: nr_of_wheels,
     canTransportChildren: can_transport_children,
     maxTransportWeigth: max_transport_weight
   };
+  if (owner_uid) {
+    const owner = owners[owner_uid];
+    if (!owner) {
+      throw new Error("Owner not found in Commons Api data: " + owner_uid);
+    }
+    itemMongoData.owner = owner._id;
+  }
+  return itemMongoData;
 };
 const createSlotData = function(slotData, item, project, locations) {
   let { status, start, end, location_uid } = slotData;
+  const location = locations[location_uid];
+  if (!location) {
+    throw new Error("Location not found in Commons Api data: " + location_uid);
+  }
   return {
-    location: location_uid,
+    location: location._id,
     project: project._id,
     item: item._id,
     status,
@@ -214,7 +215,6 @@ const createSlotData = function(slotData, item, project, locations) {
 const sendNewProjectNotification = function(project) {
   // setup e-mail data with unicode symbols
   var mailOptions = {
-    from: '"Velogistics Server ?" <velogistics-server@outlook.de>', // sender address
     to: mailRecipients, // list of receivers
     subject: "New Commons Booking Instance", // Subject line
     text: `Hello Commons Booking Hub Admin!\n>
@@ -238,19 +238,24 @@ Cheers, your Commons Booking Hub`,
     }
   });
 };
-const removeProjectData = async function(project) {
+const removeProjectData = async function(projectId) {
   const removalPromises = [];
-  removalPromises.push(COwner.deleteMany({ project }));
-  removalPromises.push(CItem.deleteMany({ project }));
-  removalPromises.push(CLocation.deleteMany({ project }));
+  removalPromises.push(COwner.deleteMany({ project: projectId }));
+  removalPromises.push(CItem.deleteMany({ project: projectId }));
+  removalPromises.push(CLocation.deleteMany({ project: projectId }));
+  removalPromises.push(CSlot.deleteMany({ project: projectId }));
   await Promise.all(removalPromises);
 };
+const unescapeSlashes = url => {
+  return url.replace(/\\\//g, "/");
+};
 const reduceToUidDictionary = (acc, curr) => {
-  acc[curr.id] = curr;
+  acc[curr.uid] = curr;
   return acc;
 };
 
 module.exports = {
   importFromCommonsApiEndpoint: importFromCommonsApiEndpoint,
-  importAllProjects: importAllProjects
+  importAllProjects: importAllProjects,
+  importJson: importJson
 };

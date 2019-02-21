@@ -1,9 +1,9 @@
-var validate = require('mongoose-validator');
+var validate = require("mongoose-validator");
 
 module.exports = [
-    validate({
-        validator: 'isURL',
-        arguments: { protocols: ['http', 'https'] },
-        message: 'Value is not a valid url.'
-    })
+  validate({
+    validator: "isURL",
+    arguments: { protocols: ["http", "https"], require_tld: false },
+    message: "Value is not a valid url."
+  })
 ];

@@ -3,8 +3,8 @@ var urlValidator = require("../validators/urlValidator");
 var Schema = mongoose.Schema;
 
 var CProjectSchema = new Schema({
-  url: { type: String, required: true, validate: urlValidator },
-  uid: { type: String, required: true },
+  endpoint: { type: String, required: true, validate: urlValidator },
+  url: { type: String, validate: urlValidator },
   name: { type: String, required: true },
   imported: { type: Date, default: Date.now },
   description: { type: String },

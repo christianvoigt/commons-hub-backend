@@ -1,7 +1,7 @@
 const faker = require("faker");
 const logger = require("./utils/logger");
 const moment = require("moment");
-require('dotenv').config({path: __dirname + '/.env'});
+require("dotenv").config({ path: __dirname + "/.env" });
 
 logger.info(
   "Velogistics DB Population: This script populates some test items, slots, locations, owners, projects to your database. It uses environment variables to create a url to your mongo database."
@@ -68,7 +68,7 @@ async function ownerCreate(name, project) {
   const ownerdetail = {
     name: name,
     project: project._id,
-    uid: "asdasd",
+    uid: "test",
     url: "http://www.spiegel.de"
   };
 
@@ -80,6 +80,7 @@ async function ownerCreate(name, project) {
 async function projectCreate(name, url) {
   const projectdetail = {
     name: name,
+    endpoint: url,
     url: url,
     uid: "asdasd"
   };

@@ -1,7 +1,8 @@
 var asyncMiddleware = require("../utils/asyncMiddleware");
-const agenda = require("../worker");
+const agenda = require("../utils/agenda.js");
 const IMPORT_PROJECT = require("../jobs/IMPORT_PROJECT").IMPORT_PROJECT;
-require('dotenv').config({path: __dirname + '/.env'});
+require("dotenv").load();
+const logger = require("../utils/logger");
 
 const Ajv = require("ajv");
 
@@ -23,8 +24,8 @@ exports.notify = asyncMiddleware(async (req, res) => {
   }
   //await importer.importFromUrl(url);
   // debouncing: cancel existing jobs
-  agenda.cancel({ name: IMPORT_PROJECT, url });
-  const when = new Date(new Date().getTime + interval);
+  agenda.cancel({ name: IMPORT_PROJECT, data: { url } });
+  const when = new Date(new Date() + parseInt(interval));
   agenda.schedule(when, IMPORT_PROJECT, {
     url
   });

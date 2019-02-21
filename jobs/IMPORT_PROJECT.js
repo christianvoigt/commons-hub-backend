@@ -4,9 +4,9 @@ const logger = require("../utils/logger");
 const IMPORT_PROJECT = (exports.IMPORT_PROJECT = "IMPORT_PROJECT");
 exports.default = function(agenda) {
   agenda.define(IMPORT_PROJECT, function(job, done) {
-    logger.log("info", "Starting import of project: " + job.url);
+    const { url } = job.attrs.data;
     importer
-      .importFromCommonsApiEndpoint(job.url)
+      .importFromCommonsApiEndpoint(url)
       .then(() => done(), error => done(error));
   });
 };

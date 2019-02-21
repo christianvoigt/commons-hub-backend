@@ -16,10 +16,15 @@ var itemRoutes = require("./routes/item");
 var indexRoutes = require("./routes/index");
 var slotRoutes = require("./routes/slot");
 var locationRoutes = require("./routes/location");
-var agenda = require("./worker.js");
+var agendaWorker = require("./agendaWorker.js");
+var agenda = require("./utils/agenda.js");
 var EMAIL = require("./jobs/EMAIL").EMAIL;
 require("dotenv").config({ path: __dirname + "/.env" });
 
+agendaWorker.start().catch(error => {
+  logger.error(error);
+  process.exit(-1);
+});
 var app = express();
 app.use(compression());
 app.use(helmet());

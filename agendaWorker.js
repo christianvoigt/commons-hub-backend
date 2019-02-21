@@ -1,15 +1,8 @@
-const Agenda = require("agenda");
 const logger = require("./utils/logger");
 //const { MongoClient } = require('mongodb');
-require('dotenv').config({path: __dirname + '/.env'});
+require("dotenv").config({ path: __dirname + "/.env" });
 
-const mongo_username = process.env.MONGODB_AGENDA_USERNAME;
-const mongo_password = process.env.MONGODB_AGENDA_PASSWORD;
-const mongo_dbname = process.env.MONGODB_DBNAME;
-const mongo_port = process.env.MONGODB_PORT;
-const mongo_host = process.env.MONGODB_HOST;
-const mongoConnectionString = `mongodb://${mongo_username}:${mongo_password}@${mongo_host}:${mongo_port}/${mongo_dbname}?authSource=admin`;
-
+const agenda = require("./utils/agenda");
 const jobTypes = process.env.JOB_TYPES ? process.env.JOB_TYPES.split(",") : [];
 
 /**
@@ -48,20 +41,10 @@ const unlockAgendaJobs = async function(agenda) {
     }
   );
 };
-var agenda = null;
-async function run() {
+
+async function start() {
   //const db = await MongoClient.connect(mongoConnectionString);
 
-  // Agenda will use the given mongodb connection to persist data, so jobs
-  // will go in the "agendatest" database's "jobs" collection.
-  //const agenda = new Agenda().mongo(db, 'jobs');
-  agenda = new Agenda({
-    db: {
-      address: mongoConnectionString,
-      collection: "jobs",
-      options: { useNewUrlParser: true }
-    }
-  });
   jobTypes.forEach(function(type) {
     require("./jobs/" + type.trim()).default(agenda);
   });
@@ -87,9 +70,4 @@ async function run() {
   return agenda;
 }
 
-run().catch(error => {
-  logger.error(error);
-  process.exit(-1);
-});
-
-module.exports = agenda;
+module.exports = { start };
