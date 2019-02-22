@@ -68,7 +68,7 @@ const importJson = async function(url, data, sendNotification = true) {
     e.remoteHostname = url;
     throw e;
   }
-  const project = await CProject.findOne({ endpoint: url }).exec();
+  let project = await CProject.findOne({ endpoint: url }).exec();
   if (project && project.is_blocked) {
     logger.info("Aborting import, site is blocked.");
     return false;
