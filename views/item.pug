@@ -3,7 +3,11 @@ extends layout
 block content
     h2 #{item.name}
     p #{item.description}
-    p #{item.ca_url}
+    p #{item.url}
+    p 
+        span project: 
+        a(href=`${basePath}/admin/project/${item.project}`)=item.project
+
     h3 Slots (#{slots.length})
     table
         tr

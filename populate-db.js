@@ -1,6 +1,7 @@
 const faker = require("faker");
 const logger = require("./utils/logger");
 const moment = require("moment");
+var metadata = require("./node_modules/commons-api/velogistics-metadata.json");
 require("dotenv").config({ path: __dirname + "/.env" });
 
 logger.info(
@@ -15,11 +16,13 @@ var mongo_host = process.env.MONGODB_HOST;
 var mongoURL = `mongodb://${mongo_username}:${mongo_password}@${mongo_host}:${mongo_port}/${mongo_dbname}?authSource=admin`;
 
 var CItem = require("./models/CItem");
+var CDataSource = require("./models/CDataSource");
 var CProject = require("./models/CProject");
 var COwner = require("./models/COwner");
 var CSlot = require("./models/CSlot");
 var CLocation = require("./models/CLocation");
 
+var sources = [];
 var items = [];
 var owners = [];
 var projects = [];
@@ -36,6 +39,7 @@ mongoose.connection.on(
 async function removeOldData() {
     logger.info("Removing old data...");
     const removePromises = [];
+    removePromises.push(CDataSource.deleteMany({}));
     removePromises.push(CLocation.deleteMany({}));
     removePromises.push(CSlot.deleteMany({}));
     removePromises.push(COwner.deleteMany({}));
@@ -46,29 +50,40 @@ async function removeOldData() {
     logger.info("Data successfully removed.");
 }
 
-async function itemCreate(name, owner, project, url, nrOfSlots) {
+async function itemCreate(source, name, owner, project, url, nrOfSlots) {
+    const features = [];
+    for (var i = 0; i < getRandomInt(0, 6); i++) {
+        features.push(getRandomElement(metadata.features).id);
+    }
     const itemdetail = {
         name: name,
         description: faker.lorem.paragraph(),
         owner: owner._id,
+        source: source._id,
         project: project._id,
-        uid: "asdfasdasf",
+        originalId: "asdfasdasf",
         url: url,
-        canTransportChildren: getRandomElement([true, false]),
-        maxTransportWeight: getRandomInt(1, 1000),
-        nrOfWheels: getRandomInt(1, 12)
+        itemType: getRandomElement(metadata.itemType).id,
+        features,
+        isCommercial: getRandomElement([true, false]),
+        loadCapacity: getRandomInt(1, 50),
+        boxDimensions: {
+            width: getRandomInt(1, 4),
+            length: getRandomInt(1, 4),
+            height: getRandomInt(1, 4)
+        }
     };
     var item = new CItem(itemdetail);
     await item.save();
-    await createSlots(item, project, nrOfSlots);
+    await createSlots(source, item, nrOfSlots);
     items.push(item);
 }
 
-async function ownerCreate(name, project) {
+async function ownerCreate(source, name) {
     const ownerdetail = {
         name: name,
-        project: project._id,
-        uid: "test",
+        source: source._id,
+        originalId: "test",
         url: "http://www.spiegel.de"
     };
 
@@ -77,35 +92,44 @@ async function ownerCreate(name, project) {
     owners.push(owner);
 }
 
-async function projectCreate(name, url) {
+async function projectCreate(source, name) {
     const projectdetail = {
         name: name,
-        endpoint: url,
-        url: url,
-        uid: "asdasd"
+        source: source._id,
+        originalId: "asdasd",
+        url: "http://www.spiegel.de"
     };
 
     var project = new CProject(projectdetail);
     await project.save();
     projects.push(project);
 }
+async function sourceCreate(url) {
+    const sourcedetail = {
+        url: url
+    };
+
+    var source = new CDataSource(sourcedetail);
+    await source.save();
+    sources.push(source);
+}
 
 async function locationCreate(
+    source,
     name,
     description,
     address,
     url,
-    uid,
-    project,
+    originalId,
     coordinates
 ) {
     var location = new CLocation({
         name: name,
+        source: source._id,
         description,
         address,
         url,
-        uid: uid,
-        project: project._id,
+        originalId: originalId,
         geometry: {
             type: "Point",
             coordinates: coordinates
@@ -125,17 +149,23 @@ async function locationCreate(
 //     categoryCreate("Massiver Gepäckträger und Korb")
 //   ]);
 // }
-
+async function createSources() {
+    logger.info("Creating Sources...");
+    await Promise.all([sourceCreate("http://www.spiegel.de")]);
+    await Promise.all([sourceCreate("http://nytimes.com")]);
+}
 async function createProjects() {
     logger.info("Creating Projects...");
-    await Promise.all([projectCreate("p1", "http://www.spiegel.de")]);
-    await Promise.all([projectCreate("p2", "http://nytimes.com")]);
+    await Promise.all([
+        projectCreate(sources[0], "p1", "http://www.spiegel.de")
+    ]);
+    await Promise.all([projectCreate(sources[0], "p2", "http://nytimes.com")]);
 }
 async function createOwners(nrOfOwners) {
     logger.info("Creating Owners...");
     const promises = [];
     for (var i = 0; i < nrOfOwners; i++) {
-        promises.push(ownerCreate(faker.name.findName(), projects[0]));
+        promises.push(ownerCreate(sources[0], faker.name.findName()));
     }
     await Promise.all(promises);
 }
@@ -146,28 +176,29 @@ async function createLocations(nrOfLocations) {
     for (var i = 0; i < nrOfLocations; i++) {
         promises.push(
             locationCreate(
+                sources[0],
                 faker.name.findName(),
                 faker.lorem.paragraph(3),
                 `${faker.address.streetAddress()}, ${faker.address.city()} ${faker.address.zipCode()}, ${faker.address.country()}`,
                 faker.internet.url(),
                 "adasd",
-                getRandomElement(projects),
-                [faker.address.latitude(), faker.address.longitude()]
+                getCoordinates()
             )
         );
     }
     await Promise.all(promises);
 }
 
-async function createSlots(item, project, nrOfSlots) {
+async function createSlots(source, item, nrOfSlots) {
     const promises = [];
     const slots = [];
-    let start = moment();
+    let start = moment().startOf("day");
     for (var i = 0; i < nrOfSlots; i++) {
         const end = moment(start).add(1, "day");
         slots.push({
+            source: source._id,
             item: item._id,
-            status: getRandomElement([
+            statusName: getRandomElement([
                 "available",
                 "available",
                 "available",
@@ -175,10 +206,10 @@ async function createSlots(item, project, nrOfSlots) {
                 "repair",
                 "holiday"
             ]),
+            statusId: getRandomInt(0, 4),
             start: start,
             end: end,
-            location: getRandomElement(locations)._id,
-            project: project._id
+            location: getRandomElement(locations)._id
         });
         start = end;
     }
@@ -192,6 +223,11 @@ function getRandomElement(arr) {
     var index = getRandomInt(0, arr.length - 1);
     return arr[index];
 }
+function getCoordinates() {
+    const long = 13 + (Math.random() * 3 - 1.5);
+    const lat = 52 + (Math.random() * 3 - 1.5);
+    return [long, lat];
+}
 async function createItems(nrOfItems, nrOfSlots) {
     logger.info("Creating Items...");
     const promises = [];
@@ -199,6 +235,7 @@ async function createItems(nrOfItems, nrOfSlots) {
         var owner = owners[getRandomInt(0, owners.length - 1)];
         promises.push(
             itemCreate(
+                sources[0],
                 faker.commerce.productName(),
                 owner,
                 projects[0],
@@ -216,17 +253,19 @@ async function main() {
     const nrOfSlots = 20; // per item
 
     try {
-        if (process.env.MONGODB_POPULATE_DB) {
-            //Clear db
-            if (process.env.MONGODB_CLEAR_DB) {
-                await removeOldData();
-            }
-            // await createProjects();
-            // await createOwners(nrOfOwners);
-            // await createLocations(nrOfLocations);
-            // await createItems(nrOfItems, nrOfSlots);
-            mongoose.connection.close();
+        //Clear db
+        if (process.env.MONGODB_CLEAR_DB != "false") {
+            await removeOldData();
         }
+        if (process.env.MONGODB_POPULATE_DB != "false") {
+            logger.info("huch?");
+            await createSources();
+            await createProjects();
+            await createOwners(nrOfOwners);
+            await createLocations(nrOfLocations);
+            await createItems(nrOfItems, nrOfSlots);
+        }
+        mongoose.connection.close();
     } catch (e) {
         logger.error(e);
     }

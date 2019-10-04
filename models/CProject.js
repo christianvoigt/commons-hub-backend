@@ -3,12 +3,11 @@ var urlValidator = require("../validators/urlValidator");
 var Schema = mongoose.Schema;
 
 var CProjectSchema = new Schema({
-  endpoint: { type: String, required: true, validate: urlValidator },
-  url: { type: String, validate: urlValidator },
-  name: { type: String, required: true },
-  imported: { type: Date, default: Date.now },
-  description: { type: String },
-  is_blocked: { type: Boolean, default: false }
+    url: { type: String, validate: urlValidator },
+    originalId: { type: String, required: true },
+    source: { type: Schema.Types.ObjectId, ref: "CDataSource", required: true },
+    name: { type: String, required: true },
+    description: { type: String }
 });
 
 module.exports = mongoose.model("CProject", CProjectSchema);

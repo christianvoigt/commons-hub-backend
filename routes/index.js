@@ -11,74 +11,84 @@ const basePath = process.env.EXPRESS_BASE_PATH || "";
 // var owner_controller = require('../controllers/CBOwnerController');
 // GET index home page.
 router.get("/", function(req, res) {
-  res.render("index", { user: req.user });
+    res.render("index", { user: req.user });
 });
 
 router.get("/notify/", import_controller.notify);
 
 /* GET restricted site. */
 router.get(
-  "/admin",
-  passwordless.restricted({ failureRedirect: basePath + "/login" }),
-  admin_controller.admin
+    "/admin",
+    passwordless.restricted({ failureRedirect: basePath + "/login" }),
+    admin_controller.admin
 );
 
 router.get(
-  "/admin/project",
-  passwordless.restricted({ failureRedirect: basePath + "/login" }),
-  admin_controller.blacklist_get
+    "/admin/source",
+    passwordless.restricted({ failureRedirect: basePath + "/login" }),
+    admin_controller.blacklist_get
 );
 router.get(
-  "/admin/item/:itemId",
-  passwordless.restricted({ failureRedirect: basePath + "/login" }),
-  admin_controller.item
+    "/admin/item/:itemId",
+    passwordless.restricted({ failureRedirect: basePath + "/login" }),
+    admin_controller.item
 );
 router.get(
-  "/admin/project/:projectId",
-  passwordless.restricted({ failureRedirect: basePath + "/login" }),
-  admin_controller.project
+    "/admin/project/:projectId",
+    passwordless.restricted({ failureRedirect: basePath + "/login" }),
+    admin_controller.project
+);
+router.get(
+    "/admin/location/:locationId",
+    passwordless.restricted({ failureRedirect: basePath + "/login" }),
+    admin_controller.location
+);
+router.get(
+    "/admin/source/:sourceId",
+    passwordless.restricted({ failureRedirect: basePath + "/login" }),
+    admin_controller.source
 );
 
 router.post(
-  "/admin/project",
-  passwordless.restricted(),
-  admin_controller.blacklist_post
+    "/admin/source",
+    passwordless.restricted(),
+    admin_controller.blacklist_post
 );
 
 /* GET login screen. */
 router.get("/login", function(req, res) {
-  res.render("login", { user: req.user });
+    res.render("login", { user: req.user });
 });
 
 /* GET logout. */
 router.get("/logout", passwordless.logout(), function(req, res) {
-  res.redirect(basePath + "/");
+    res.redirect(basePath + "/");
 });
 
 /* POST login screen. */
 const adminEmails = process.env.ADMIN_EMAIL_ADRESSES
-  ? process.env.ADMIN_EMAIL_ADRESSES.split(",")
-  : [];
+    ? process.env.ADMIN_EMAIL_ADRESSES.split(",")
+    : [];
 const admins = [];
 var i = 1;
 for (var adminEmail of adminEmails) {
-  admins.push({ id: i, email: adminEmail.trim().toLowerCase() });
-  i++;
+    admins.push({ id: i, email: adminEmail.trim().toLowerCase() });
+    i++;
 }
 
 router.post(
-  "/sendtoken",
-  passwordless.requestToken(function(user, delivery, callback) {
-    for (var i = admins.length - 1; i >= 0; i--) {
-      if (admins[i].email === user.toLowerCase()) {
-        return callback(null, admins[i].id);
-      }
+    "/sendtoken",
+    passwordless.requestToken(function(user, delivery, callback) {
+        for (var i = admins.length - 1; i >= 0; i--) {
+            if (admins[i].email === user.toLowerCase()) {
+                return callback(null, admins[i].id);
+            }
+        }
+        callback(null, null);
+    }),
+    function(req, res) {
+        // success!
+        res.render("email-sent");
     }
-    callback(null, null);
-  }),
-  function(req, res) {
-    // success!
-    res.render("email-sent");
-  }
 );
 module.exports = router;

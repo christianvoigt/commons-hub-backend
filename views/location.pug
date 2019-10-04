@@ -1,0 +1,19 @@
+extends layout
+
+block content
+    h2 Location: #{location.name}
+    dl
+        dt coordinates
+        dd=location.geometry.coordinates
+        dt id
+        dd=location._id
+        dt originalId
+        dd=location.originalId
+        dt address
+        dd=location.address
+        dt url
+        dd=location.url
+        dt description
+        dd=location.description
+        dt data source
+        dd=location.source

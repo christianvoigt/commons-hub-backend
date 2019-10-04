@@ -1,5 +1,6 @@
 tr
     td #{slot.start}
     td #{slot.end}
-    td #{slot.location}
-    td #{slot.status}
+    td
+       a(href=`${basePath}/admin/location/${slot.location}`)=slot.location
+    td #{slot.statusName}

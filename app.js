@@ -12,18 +12,16 @@ var compression = require("compression");
 var helmet = require("helmet");
 var MongoDBStore = require("connect-mongodb-session")(expressSession);
 
-var itemRoutes = require("./routes/item");
 var indexRoutes = require("./routes/index");
-var slotRoutes = require("./routes/slot");
-var locationRoutes = require("./routes/location");
+var queryRoutes = require("./routes/query");
 var agendaWorker = require("./agendaWorker.js");
 var agenda = require("./utils/agenda.js");
 var EMAIL = require("./jobs/EMAIL").EMAIL;
 require("dotenv").config({ path: __dirname + "/.env" });
 
 agendaWorker.start().catch(error => {
-  logger.error(error);
-  process.exit(-1);
+    logger.error(error);
+    process.exit(-1);
 });
 var app = express();
 app.use(compression());
@@ -50,24 +48,24 @@ db.on("error", logger.error.bind(logger, "MongoDB connection error:"));
 // Setup of Passwordless
 passwordless.init(new MongoStore(mongoURL, { useNewUrlParser: true }));
 passwordless.addDelivery(
-  function(tokenToSend, uidToSend, recipient, callback) {
-    // setup e-mail data with unicode symbols
-    const uidToSendEnc = encodeURIComponent(uidToSend);
-    var mailOptions = {
-      from: '"Velogistics Server ?" <velogistics-server@outlook.de>', // sender address
-      to: recipient, // list of receivers
-      subject: "Token for Velogistics", // Subject line
-      text: `Hello Commons Booking Hub Admin!\nYou can now access your account here: ${siteUrl}/admin?token=${tokenToSend}&uid=${uidToSendEnc}`,
-      html: `<h1>Hello Commons Booking Hub Admin!</h1><p>You can now access your account by clicking on <a href="${siteUrl}/admin?token=${tokenToSend}&uid=${uidToSendEnc}">this link</a>.<p>Greetings, your Commons Booking Hub!</p></p>`
-    };
-    agenda.now(EMAIL, mailOptions, function(error) {
-      if (error) {
-        logger.error(error);
-      }
-      callback(error);
-    });
-  },
-  { ttl: 1000 * 60 * 60 * 24 }
+    function(tokenToSend, uidToSend, recipient, callback) {
+        // setup e-mail data with unicode symbols
+        const uidToSendEnc = encodeURIComponent(uidToSend);
+        var mailOptions = {
+            from: '"Velogistics Server ?" <velogistics-server@outlook.de>', // sender address
+            to: recipient, // list of receivers
+            subject: "Token for Velogistics", // Subject line
+            text: `Hello Commons Booking Hub Admin!\nYou can now access your account here: ${siteUrl}/admin?token=${tokenToSend}&uid=${uidToSendEnc}`,
+            html: `<h1>Hello Commons Booking Hub Admin!</h1><p>You can now access your account by clicking on <a href="${siteUrl}/admin?token=${tokenToSend}&uid=${uidToSendEnc}">this link</a>.<p>Greetings, your Commons Booking Hub!</p></p>`
+        };
+        agenda.now(EMAIL, mailOptions, function(error) {
+            if (error) {
+                logger.error(error);
+            }
+            callback(error);
+        });
+    },
+    { ttl: 1000 * 60 * 60 * 24 }
 );
 
 // view engine setup
@@ -84,26 +82,26 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 var sessionStore = new MongoDBStore(
-  {
-    uri: mongoURL,
-    collection: "sessions"
-  },
-  function(error) {
-    if (error) {
-      logger.error(error.message);
+    {
+        uri: mongoURL,
+        collection: "sessions"
+    },
+    function(error) {
+        if (error) {
+            logger.error(error.message);
+        }
     }
-  }
 );
 sessionStore.on("error", function(error) {
-  logger.error(error.message);
+    logger.error(error.message);
 });
 // config express-session
 var sess = {
-  secret: process.env.EXPRESS_SESSION_SECRET,
-  saveUninitialized: false,
-  resave: false,
-  cookie: { maxAge: 1000 * 60 * 60 * 2 },
-  store: sessionStore
+    secret: process.env.EXPRESS_SESSION_SECRET,
+    saveUninitialized: false,
+    resave: false,
+    cookie: { maxAge: 1000 * 60 * 60 * 2 },
+    store: sessionStore
 };
 
 // The following is the recommended setting on https connections, but did not work on uberspace 6:
@@ -114,50 +112,48 @@ var sess = {
 app.use(expressSession(sess));
 
 app.use(function(req, res, next) {
-  if (req.user) {
-    res.locals.user = req.user;
-    next();
-  } else {
-    next();
-  }
+    if (req.user) {
+        res.locals.user = req.user;
+        next();
+    } else {
+        next();
+    }
 });
 
 app.use(express.static(path.join(__dirname, "public")));
 app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
-  );
-  next();
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header(
+        "Access-Control-Allow-Headers",
+        "Origin, X-Requested-With, Content-Type, Accept"
+    );
+    next();
 });
 // Passwordless middleware
 app.use(passwordless.sessionSupport());
 app.use(passwordless.acceptToken({ successRedirect: basePath + "/admin" }));
 
 app.use(
-  mongoSanitize({
-    replaceWith: "_"
-  })
+    mongoSanitize({
+        replaceWith: "_"
+    })
 );
 
 app.use("/", indexRoutes);
-app.use("/item", itemRoutes);
-app.use("/slot", slotRoutes);
 // catch 404 and forward to error handler
-app.use("/location", locationRoutes);
+app.use("/query", queryRoutes);
 app.use(function(req, res, next) {
-  res.status(404).send("Sorry can't find that!");
+    res.status(404).send("Sorry can't find that!");
 });
 // error handler
 app.use(function(err, req, res) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get("env") === "development" ? err : {};
+    // set locals, only providing error in development
+    res.locals.message = err.message;
+    res.locals.error = req.app.get("env") === "development" ? err : {};
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render("error");
+    // render the error page
+    res.status(err.status || 500);
+    res.render("error");
 });
 
 module.exports = app;

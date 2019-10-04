@@ -1,12 +1,15 @@
 extends layout
 
 block content
-    h2 #{project.name}
-    p #{project.description}
-    p #{project.ca_url}
-    h3 Items
-    ul
-        each item in items
-            li 
-                a(href=`${basePath}/admin/item/${item._id}`) #{item.name}
-
+    h2 Project: #{project.name}
+    dl
+        dt id
+        dd=project._id
+        dt originalId
+        dd=project.originalId
+        dt url
+        dd=project.url
+        dt description
+        dd=project.description
+        dt data source
+        dd=project.source

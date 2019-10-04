@@ -1,0 +1,19 @@
+extends layout
+
+block content
+    h2 Registered Data Sources
+    p Check the sites you want to block.
+    form(action=`${basePath}/admin/source`, method='POST')
+        table
+            tr
+                th ID
+                th URL
+                th Block Site
+            each source in sources
+                tr
+                    td
+                        a(href=`${basePath}/admin/source/${source._id}`)=source._id
+                    td=source.url
+                    td
+                        input(type='checkbox' id=`isBlocked-${source._id}` name=`isBlocked-${source._id}` checked=source.isBlocked)
+        input(type='submit', value='Update Blacklist')
