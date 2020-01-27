@@ -6,8 +6,6 @@ var CSlotSchema = new Schema({
     item: { type: Schema.Types.ObjectId, ref: "CItem", required: true },
     start: { type: Date, required: true },
     end: { type: Date, required: true },
-    statusName: { type: String, required: true },
-    statusId: { type: String, required: true },
     location: { type: Schema.Types.ObjectId, ref: "CLocation", required: true }
 });
 module.exports = mongoose.model("CSlot", CSlotSchema);

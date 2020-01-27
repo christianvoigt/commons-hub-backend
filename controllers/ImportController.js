@@ -2,7 +2,7 @@ var asyncMiddleware = require("../utils/asyncMiddleware");
 const agenda = require("../utils/agenda.js");
 const IMPORT_COMMONS_API_DATA = require("../jobs/IMPORT_COMMONS_API_DATA")
     .IMPORT_COMMONS_API_DATA;
-require("dotenv").load();
+require("dotenv").config();
 const logger = require("../utils/logger");
 
 const Ajv = require("ajv");

@@ -21,6 +21,13 @@ var CItemSchema = new Schema({
         height: { type: Number },
         length: { type: Number }
     },
-    loadCapacity: { type: Number }
+    bikeDimensions: {
+        width: { type: Number },
+        height: { type: Number },
+        length: { type: Number }
+    },
+    loadCapacity: { type: Number },
+    nrOfWheels: { type: Number },
+    seatsForChildren: { type: Number }
 });
 module.exports = mongoose.model("CItem", CItemSchema);

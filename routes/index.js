@@ -22,7 +22,16 @@ router.get(
     passwordless.restricted({ failureRedirect: basePath + "/login" }),
     admin_controller.admin
 );
-
+router.get(
+    "/admin/generate",
+    passwordless.restricted({ failureRedirect: basePath + "/login" }),
+    admin_controller.generate_get
+);
+router.post(
+    "/admin/generate",
+    passwordless.restricted(),
+    admin_controller.generate_post
+);
 router.get(
     "/admin/source",
     passwordless.restricted({ failureRedirect: basePath + "/login" }),

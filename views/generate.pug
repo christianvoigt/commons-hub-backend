@@ -1,0 +1,14 @@
+extends layout
+
+block content
+    h2 Generate Static Pages
+    if error
+        div.message.error
+            h3="Error"
+            p=error.message
+    else if success
+        div.message.success
+            h3="Success"
+            p=success.message
+    form(action=`${basePath}/admin/generate`, method='POST')
+        input(type='submit', value='Generate')

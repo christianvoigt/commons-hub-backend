@@ -4,6 +4,7 @@ const CItem = require("../models/CItem");
 const CSlot = require("../models/CSlot");
 const CLocation = require("../models/CLocation");
 const CProject = require("../models/CProject");
+const generator = require("../utils/StaticSiteGenerator");
 //const logger = require('../utils/logger');
 
 exports.admin = asyncMiddleware(async (req, res) => {
@@ -44,6 +45,20 @@ exports.location = asyncMiddleware(async (req, res) => {
         user: req.user,
         location
     });
+});
+exports.generate_get = asyncMiddleware(async (req, res) => {
+    res.render("generate", { user: req.user });
+});
+exports.generate_post = asyncMiddleware(async (req, res) => {
+    try {
+        await generator.generate();
+        res.render("generate", {
+            user: req.user,
+            success: { message: "Successfully generated pages." }
+        });
+    } catch (e) {
+        res.render("generate", { user: req.user, error: e });
+    }
 });
 exports.blacklist_get = asyncMiddleware(async (req, res) => {
     const sources = await CDataSource.find().exec();

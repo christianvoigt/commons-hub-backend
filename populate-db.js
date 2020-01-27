@@ -258,7 +258,6 @@ async function main() {
             await removeOldData();
         }
         if (process.env.MONGODB_POPULATE_DB != "false") {
-            logger.info("huch?");
             await createSources();
             await createProjects();
             await createOwners(nrOfOwners);

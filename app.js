@@ -1,3 +1,4 @@
+global.__basedir = __dirname;
 var express = require("express");
 var path = require("path");
 // var favicon = require('serve-favicon');
@@ -40,7 +41,10 @@ const siteUrl = host + basePath;
 
 var mongoose = require("mongoose");
 var mongoURL = `mongodb://${mongo_username}:${mongo_password}@${mongo_host}:${mongo_port}/${mongo_dbname}?authSource=admin`;
-mongoose.connect(mongoURL, { useNewUrlParser: true });
+mongoose.connect(mongoURL, {
+    useUnifiedTopology: true,
+    useNewUrlParser: true,
+});
 mongoose.Promise = global.Promise;
 var db = mongoose.connection;
 db.on("error", logger.error.bind(logger, "MongoDB connection error:"));
@@ -48,7 +52,7 @@ db.on("error", logger.error.bind(logger, "MongoDB connection error:"));
 // Setup of Passwordless
 passwordless.init(new MongoStore(mongoURL, { useNewUrlParser: true }));
 passwordless.addDelivery(
-    function(tokenToSend, uidToSend, recipient, callback) {
+    function (tokenToSend, uidToSend, recipient, callback) {
         // setup e-mail data with unicode symbols
         const uidToSendEnc = encodeURIComponent(uidToSend);
         var mailOptions = {
@@ -58,7 +62,7 @@ passwordless.addDelivery(
             text: `Hello Commons Booking Hub Admin!\nYou can now access your account here: ${siteUrl}/admin?token=${tokenToSend}&uid=${uidToSendEnc}`,
             html: `<h1>Hello Commons Booking Hub Admin!</h1><p>You can now access your account by clicking on <a href="${siteUrl}/admin?token=${tokenToSend}&uid=${uidToSendEnc}">this link</a>.<p>Greetings, your Commons Booking Hub!</p></p>`
         };
-        agenda.now(EMAIL, mailOptions, function(error) {
+        agenda.now(EMAIL, mailOptions, function (error) {
             if (error) {
                 logger.error(error);
             }
@@ -86,13 +90,13 @@ var sessionStore = new MongoDBStore(
         uri: mongoURL,
         collection: "sessions"
     },
-    function(error) {
+    function (error) {
         if (error) {
             logger.error(error.message);
         }
     }
 );
-sessionStore.on("error", function(error) {
+sessionStore.on("error", function (error) {
     logger.error(error.message);
 });
 // config express-session
@@ -111,7 +115,7 @@ var sess = {
 
 app.use(expressSession(sess));
 
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
     if (req.user) {
         res.locals.user = req.user;
         next();
@@ -121,7 +125,7 @@ app.use(function(req, res, next) {
 });
 
 app.use(express.static(path.join(__dirname, "public")));
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header(
         "Access-Control-Allow-Headers",
@@ -142,11 +146,11 @@ app.use(
 app.use("/", indexRoutes);
 // catch 404 and forward to error handler
 app.use("/query", queryRoutes);
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
     res.status(404).send("Sorry can't find that!");
 });
 // error handler
-app.use(function(err, req, res) {
+app.use(function (err, req, res) {
     // set locals, only providing error in development
     res.locals.message = err.message;
     res.locals.error = req.app.get("env") === "development" ? err : {};

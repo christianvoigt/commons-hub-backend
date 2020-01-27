@@ -17,3 +17,7 @@ EXPRESS_HOST=http://localhost
 EXPRESS_BASE_PATH=/subfolder
 IMPORT_DEBOUNCE_INTERVAL=10000
 IMPORT_MAX_CONTENT_LENGTH=20000
+WORDPRESS_REST_API_URL=http://host.docker.internal/wp-json/wp/v2
+VELOGISTICS_THEME_REST_API_URL=http://host.docker.internal/wp-json/velogistics-theme
+COMPONENT_FOLDER=/frontend/src
+FRONTEND_FOLDER=/frontend

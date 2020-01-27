@@ -1,12 +1,11 @@
 const winston = require("winston");
 const path = require("path");
 const mkdirp = require("mkdirp");
-winston.emitErrs = true;
 
 const logFolderPath = path.join(__dirname, "../logs");
 mkdirp.sync(logFolderPath);
 
-var logger = new winston.Logger({
+var logger = winston.createLogger({
   transports: [
     new winston.transports.File({
       level: "info",
@@ -28,7 +27,7 @@ var logger = new winston.Logger({
 });
 module.exports = logger;
 module.exports.stream = {
-  write: function(message) {
+  write: function (message) {
     logger.info(message);
   }
 };

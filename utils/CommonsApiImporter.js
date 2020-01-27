@@ -35,10 +35,10 @@ const importFromSource = async function(params) {
         }
         const itemId = params.itemId;
         const updateAvailability = true; // for now, always update availability to avoid outdated _ids in slots
-        const updateLocations = !source || params.updateLocations;
-        const updateOwners = !source || params.updateOwners;
-        const updateProjects = !source || params.updateProjects;
-        const updateItems = !source || params.updateItems;
+        const updateLocations = !source || !!params.updateLocations;
+        const updateOwners = !source || !!params.updateOwners;
+        const updateProjects = !source || !!params.updateProjects;
+        const updateItems = !source || !!params.updateItems;
         if (itemId != null && updateAvailability) {
             url = url + "/availability" + itemId;
         } else {
@@ -259,18 +259,35 @@ const createDataSource = function(url) {
     });
 };
 const reimportAllSources = async function() {
-    logger.info("Reimporting all sources...");
+    var hrstart = process.hrtime();
     const sources = await CDataSource.find()
         .select("url")
         .exec();
     const promises = [];
-    if (sources) {
+    if (sources && sources.length > 0) {
+        logger.info(`Reimporting ${sources.length} sources...`);
         for (var source of sources) {
-            promises.push(importFromSource(source.url));
+            promises.push(
+                importFromSource({
+                    url: source.url,
+                    updateItems: true,
+                    updateLocations: true,
+                    updateOwners: true,
+                    updateProjects: true,
+                    updateAvailability: true
+                })
+            );
         }
+    } else {
+        logger.info("Reimport job did not find any registered sources.");
     }
     await Promise.all(promises);
-    logger.info("Finished reimporting all sources...");
+    hrend = process.hrtime(hrstart);
+    logger.info(
+        `Finished reimporting all sources. Execution time: ${
+            hrend[0]
+        }s ${hrend[1] / 1000000}ms`
+    );
 };
 const createProject = function(sourceId, projectData) {
     let { id, name, url, description } = projectData;
@@ -320,8 +337,11 @@ const createItem = function(sourceId, itemData, projects, owners) {
         itemType,
         features,
         isCommercial,
+        nrOfWheels,
+        seatsForChildren,
         loadCapacity,
-        boxDimensions
+        boxDimensions,
+        bikeDimensions
     } = itemData;
     const item = {
         _id: new mongoose.mongo.ObjectId(), // we create the id here so that we can use it in the slot data
@@ -332,12 +352,19 @@ const createItem = function(sourceId, itemData, projects, owners) {
         url: encodeURI(unescapeSlashes(url)),
         itemType: itemType,
         isCommercial: isCommercial,
+        nrOfWheels: nrOfWheels,
+        seatsForChildren: seatsForChildren,
         loadCapacity: loadCapacity,
         features: features,
-        boxDimension: {
+        boxDimensions: {
             width: boxDimensions.width,
             height: boxDimensions.height,
             length: boxDimensions.length
+        },
+        bikeDimenions: {
+            width: bikeDimensions.width,
+            height: bikeDimensions.height,
+            length: bikeDimensions.length
         }
     };
     if (ownerId) {
@@ -359,7 +386,7 @@ const createItem = function(sourceId, itemData, projects, owners) {
     return item;
 };
 const createSlot = function(sourceId, slotData, items, locations) {
-    let { statusName, statusId, start, end, locationId, itemId } = slotData;
+    let { start, end, locationId, itemId } = slotData;
     const location = locations.find(
         location => location.originalId === locationId
     );
@@ -377,8 +404,6 @@ const createSlot = function(sourceId, slotData, items, locations) {
         location: location._id,
         source: sourceId,
         item: item._id,
-        statusName,
-        statusId,
         start: new Date(start),
         end: new Date(end)
     };
